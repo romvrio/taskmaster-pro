@@ -44,6 +44,73 @@ var saveTasks = function () {
   localStorage.setItem("tasks", JSON.stringify(tasks));
 };
 
+//enable draggable/sortable feature on list-group elements
+$(".card .list-group").sortable({
+  // ability to drag across lists
+  connectWith: $(".card .list-group"),
+  scroll: false,
+  tolerance: "pointer",
+  helper: "clone",
+  activate: function (event, ui) {
+    console.log(ui);
+  },
+  deactivate: function (event, ui) {
+    console.log(ui);
+  },
+  over: function (event) {
+    console.log(event);
+  },
+  out: function (event) {
+    console.log(event);
+  },
+  update: function () {
+    //array to store the task data in
+    var tempArr = [];
+
+    // loop over current set of children in sortable list
+    $(this).children().each(function () {
+      tempArr.push({
+        text: $(this)
+          .find("p")
+          .text()
+          .trim(),
+        date: $(this)
+          .find("span")
+          .text()
+          .trim()
+      });
+    });
+
+    // trim down list's ID to math object property
+    var arrName = $(this)
+      .attr("id")
+      .replace("list-", "");
+
+    //update array on tasks object and save
+    tasks[arrName] = tempArr;
+    saveTasks();
+  },
+  stop: function (event) {
+    $(this).removeClass("dropover");
+  }
+});
+
+// trash icon that can do drag and drop to delete
+$("#trash").droppable({
+  accept: ".card .list-group-item",
+  tolerance: "touch",
+  drop: function (event, ui) {
+    // removes a dragged element from the dom
+    ui.draggable.remove();
+  },
+  over: function (event, ui) {
+    console.log(ui);
+  },
+  out: function (event, ui) {
+    console.log(ui);
+  }
+
+});
 
 
 
@@ -93,17 +160,16 @@ $(".list-group").on("click", "p", function () {
     .addClass("form-control")
     .val(text);
   $(this).replaceWith(textInput);
+
   //auto focus new element
   textInput.trigger("focus");
-  console.log(text);
 });
 
 // editable field was un-focused
 $(".list-group").on("blur", "textarea", function () {
   // get the textarea's current value/text
   var text = $(this)
-    .val()
-    .trim();
+    .val();
 
   // get the parent ul's id attribute
   var status = $(this)
@@ -150,12 +216,10 @@ $(".list-group").on("click", "span", function () {
 });
 
 // value of due date was  changed
-$(".list-group").on("blur", "input[type='text']", function () {
+$(".list-group").on("change", "input[type='text']", function () {
   //get current text
   var date = $(this)
     .val()
-    .trim();
-
   //get the parent ul's id attribute
   var status = $(this)
     .closest(".list-group")
@@ -175,12 +239,13 @@ $(".list-group").on("blur", "input[type='text']", function () {
   var taskSpan = $("<span>")
     .addClass("badge badge-primary badge-pill")
     .text(date);
+  $(this).replaceWith(taskSpan);
 
   // replace input with span element
   $(this).replaceWith(taskSpan);
 
-  //
-})
+});
+
 
 // remove all tasks
 $("#remove-tasks").on("click", function () {
@@ -188,6 +253,7 @@ $("#remove-tasks").on("click", function () {
     tasks[key].length = 0;
     $("#list-" + key).empty();
   }
+  console.log(tasks);
   saveTasks();
 });
 
